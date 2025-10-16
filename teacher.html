@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - QR Attendance</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 10px 20px;
+            font-size: 0.9em;
+        }
+
+        #qrcode {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            padding: 30px;
+            background: #f9f9f9;
+            border-radius: 12px;
+        }
+
+        .session-info {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .session-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .session-info p {
+            color: #555;
+            margin: 8px 0;
+            font-size: 1em;
+        }
+
+        .qr-url-box {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .qr-url-box h4 {
+            color: #856404;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .url-display {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            word-break: break-all;
+            color: #667eea;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+        }
+
+        .attendance-list {
+            margin-top: 20px;
+        }
+
+        .attendance-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .attendance-item strong {
+            color: #667eea;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .notice {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👨‍🏫 Teacher Dashboard</h1>
+            <p>QR Attendance System</p>
+            <span class="badge">Admin Access</span>
+        </div>
+
+        <div class="content">
+            <div class="notice">
+                <strong>ℹ️ Note:</strong> This demo uses browser memory to simulate a database. For production use, you'll need to connect to a real database (Firebase, MongoDB, MySQL, etc.)
+            </div>
+
+            <!-- Generate QR Section -->
+            <div class="section">
+                <h2>Generate QR Code</h2>
+                
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="className">Class Name</label>
+                        <input type="text" id="className" placeholder="e.g., Mathematics 101">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date">
+                    </div>
+                </div>
+
+                <button onclick="generateQR()">Generate QR Code</button>
+
+                <div id="qrDisplay" style="display: none;">
+                    <div class="session-info">
+                        <h3>📋 Current Session</h3>
+                        <p><strong>Class:</strong> <span id="displayClass"></span></p>
+                        <p><strong>Date:</strong> <span id="displayDate"></span></p>
+                        <p style="background: #fff; padding: 15px; border-radius: 8px; margin-top: 15px; border: 2px dashed #667eea;">
+                            <strong style="display: block; font-size: 0.9em; color: #666; margin-bottom: 5px;">📌 DISPLAY THIS CODE IN CLASS:</strong>
+                            <span id="displaySession" style="font-size: 1.8em; color: #667eea; font-weight: bold; font-family: monospace;"></span>
+                        </p>
+                    </div>
+
+                    <div class="qr-url-box">
+                        <h4>📱 Student Attendance URL</h4>
+                        <div class="url-display" id="studentUrlDisplay"></div>
+                        <button onclick="copyUrl()" class="btn-small">📋 Copy URL</button>
+                        <button onclick="openStudentPage()" class="btn-small" style="margin-left: 10px;">🔗 Open Student Page</button>
+                    </div>
+
+                    <div id="qrcode"></div>
+                    <p style="text-align: center; color: #666; margin-top: 20px;">
+                        <strong>Students should:</strong><br>
+                        1. Open the student portal<br>
+                        2. Enter the session code shown above<br>
+                        3. Fill in their details and submit
+                    </p>
+                </div>
+            </div>
+
+            <!-- Records Section -->
+            <div class="section">
+                <h2>Attendance Records</h2>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="totalSessions">0</h3>
+                        <p>Total Sessions</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalAttendance">0</h3>
+                        <p>Total Attendance</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="uniqueStudents">0</h3>
+                        <p>Unique Students</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="filterSession">Filter by Session</label>
+                    <select id="filterSession" onchange="displayRecords()">
+                        <option value="">All Sessions</option>
+                    </select>
+                </div>
+
+                <button onclick="exportRecords()">📥 Export to CSV</button>
+                <button class="btn-secondary" onclick="clearAllData()">🗑️ Clear All Data</button>
+
+                <div id="recordsList" class="attendance-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulated database using browser memory
+        const DB = {
+            get: function(key) {
+                try {
+                    const data = sessionStorage.getItem(key);
+                    return data ? JSON.parse(data) : null;
+                } catch(e) {
+                    return null;
+                }
+            },
+            set: function(key, value) {
+                try {
+                    sessionStorage.setItem(key, JSON.stringify(value));
+                    return true;
+                } catch(e) {
+                    console.error('Storage error:', e);
+                    return false;
+                }
+            }
+        };
+
+        let sessions = DB.get('sessions') || [];
+        let attendance = DB.get('attendance') || [];
+
+        // Initialize
+        document.getElementById('date').valueAsDate = new Date();
+        displayRecords();
+        updateSessionFilter();
+
+        function saveData() {
+            DB.set('sessions', sessions);
+            DB.set('attendance', attendance);
+        }
+
+        function generateQR() {
+            const className = document.getElementById('className').value.trim();
+            const date = document.getElementById('date').value;
+
+            if (!className || !date) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+            
+            const session = {
+                id: sessionId,
+                className: className,
+                date: date,
+                createdAt: new Date().toISOString()
+            };
+
+            sessions.push(session);
+            saveData();
+
+            // Create student URL with session data encoded
+            const baseUrl = window.location.href.replace('teacher', 'student').split('?')[0].replace('.html', '-student.html');
+            const sessionData = encodeURIComponent(JSON.stringify({
+                id: sessionId,
+                className: className,
+                date: date
+            }));
+            const studentUrl = `${baseUrl}?s=${sessionData}`;
+
+            // Clear previous QR code
+            document.getElementById('qrcode').innerHTML = '';
+
+            // Generate QR code with the session code only
+            new QRCode(document.getElementById('qrcode'), {
+                text: sessionId,
+                width: 250,
+                height: 250,
+                colorDark: '#667eea',
+                colorLight: '#ffffff',
+            });
+
+            // Display session info
+            document.getElementById('displayClass').textContent = className;
+            document.getElementById('displayDate').textContent = date;
+            document.getElementById('displaySession').textContent = sessionId;
+            document.getElementById('studentUrlDisplay').textContent = studentUrl;
+            window.currentStudentUrl = studentUrl;
+            document.getElementById('qrDisplay').style.display = 'block';
+
+            updateSessionFilter();
+            displayRecords();
+        }
+
+        function copyUrl() {
+            const url = document.getElementById('studentUrlDisplay').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('✅ URL copied to clipboard! Share it with students.');
+            }).catch(() => {
+                alert('❌ Could not copy URL. Please copy it manually.');
+            });
+        }
+
+        function openStudentPage() {
+            if (window.currentStudentUrl) {
+                window.open(window.currentStudentUrl, '_blank');
+            }
+        }
+
+        function updateSessionFilter() {
+            const select = document.getElementById('filterSession');
+            select.innerHTML = '<option value="">All Sessions</option>';
+            
+            sessions.forEach(session => {
+                const option = document.createElement('option');
+                option.value = session.id;
+                option.textContent = `${session.className} - ${session.date}`;
+                select.appendChild(option);
+            });
+        }
+
+        function displayRecords() {
+            const filterValue = document.getElementById('filterSession').value;
+            const recordsList = document.getElementById('recordsList');
+            
+            let filteredData = attendance;
+            if (filterValue) {
+                filteredData = attendance.filter(a => a.sessionId === filterValue);
+            }
+
+            // Update stats
+            document.getElementById('totalSessions').textContent = sessions.length;
+            document.getElementById('totalAttendance').textContent = attendance.length;
+            
+            const uniqueStudentIds = new Set(attendance.map(a => a.studentId));
+            document.getElementById('uniqueStudents').textContent = uniqueStudentIds.size;
+
+            if (filteredData.length === 0) {
+                recordsList.innerHTML = '<div class="no-data">No attendance records found</div>';
+                return;
+            }
+
+            // Sort by timestamp (newest first)
+            filteredData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            recordsList.innerHTML = filteredData.map(record => `
+                <div class="attendance-item">
+                    <strong>${record.studentName}</strong> (${record.studentId})<br>
+                    <small>Class: ${record.className} | Date: ${record.date} | Time: ${new Date(record.timestamp).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+
+        function exportRecords() {
+            if (attendance.length === 0) {
+                alert('No records to export');
+                return;
+            }
+
+            let csv = 'Student Name,Student ID,Class,Date,Timestamp\n';
+            attendance.forEach(record => {
+                csv += `"${record.studentName}","${record.studentId}","${record.className}","${record.date}","${record.timestamp}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `attendance_records_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ Are you sure you want to clear all attendance data? This cannot be undone.')) {
+                sessions = [];
+                attendance = [];
+                saveData();
+                updateSessionFilter();
+                displayRecords();
+                document.getElementById('qrDisplay').style.display = 'none';
+                alert('✅ All data cleared successfully');
+            }
+        }
+
+        // Auto-refresh records every 5 seconds to show new attendance
+        setInterval(() => {
+            const newAttendance = DB.get('attendance') || [];
+            if (newAttendance.length !== attendance.length) {
+                attendance = newAttendance;
+                displayRecords();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
